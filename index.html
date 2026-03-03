@@ -1,0 +1,47 @@
+<!--Realizado por Bautista Alexis - Ochoa Aubertin -->
+<!DOCTYPE html>
+<!-- SPACE 404 XY - Juego de naves espaciales -->
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SPACE 404 XY</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body>
+    <div id="gamecontainer">
+      <canvas id="game"></canvas>
+
+      <!-- Elementos de audio del juego -->
+      <audio id="menuMusic" loop preload="auto">
+        <source src="assets/audio/music/musica_menu.mp3" type="audio/mpeg" />
+      </audio>
+
+      <audio id="gameMusic" loop preload="auto">
+        <source src="assets/audio/music/juego_theme.mp3" type="audio/mpeg" />
+      </audio>
+
+      <audio id="laserSound" preload="auto">
+        <source src="assets/audio/laser_shoot.mp3" type="audio/mpeg" />
+        <source src="assets/audio/laser_shoot.ogg" type="audio/ogg" />
+        <source src="assets/audio/laser_shoot.wav" type="audio/wav" />
+      </audio>
+
+      <audio id="impactSound" preload="auto">
+        <source src="assets/audio/music/impacto_nave.mp3" type="audio/mpeg" />
+      </audio>
+
+      <audio id="gameOverSound" preload="auto">
+        <source src="assets/audio/music/game_over.mp3" type="audio/mpeg" />
+      </audio>
+
+      <audio id="winSound" preload="auto">
+        <source src="assets/audio/music/win.mp3" type="audio/mpeg" />
+      </audio>
+
+      <script src="./game/states/Box2dWeb-2.1.a.3.min.js"></script>
+      <script type="module" src="./main.js"></script>
+    </div>
+  </body>
+</html>
