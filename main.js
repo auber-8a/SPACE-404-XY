@@ -67,9 +67,11 @@ function resizeCanvas() {
   canvas.width = BASE_WIDTH;
   canvas.height = BASE_HEIGHT;
 
-  // Tamaño visual en CSS para mantener la escala calculada
-  canvas.style.width = Math.floor(BASE_WIDTH * canvasScale) + "px";
-  canvas.style.height = Math.floor(BASE_HEIGHT * canvasScale) + "px";
+
+  // Usar ancho responsivo (CSS controla el tamaño visual) para evitar recorte en móviles
+  // dejamos el tamaño lógico del canvas (BASE_WIDTH/BASE_HEIGHT) para las coordenadas
+  canvas.style.width = "100%";
+  canvas.style.height = "auto";
 
   // Ajustamos el transform del contexto para renderizar a una resolución mayor en pantallas de alta DPI
   // Escalar por useDpr mapea las coordenadas lógicas (BASE_WIDTH) a suficientes píxeles físicos.
