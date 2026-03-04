@@ -34,6 +34,15 @@ window.performanceMonitor = performanceMonitor;
 // Ocultar el monitor de FPS por defecto (se puede activar con F3)
 performanceMonitor.isEnabled = false;
 
+// Marcas temporales para depurar toques en dispositivos móviles
+const touchMarkers = [];
+
+function addTouchMarker(x, y) {
+  touchMarkers.push({ x, y, t: performance.now() });
+  // mantener solo los últimos 10
+  if (touchMarkers.length > 10) touchMarkers.shift();
+}
+
 const BASE_WIDTH = 960;
 const BASE_HEIGHT = 540;
 let canvasScale = 1;
@@ -229,6 +238,22 @@ function loop(ts) {
   stateManager.render(ctx);
   performanceMonitor.render(ctx);
 
+  // Render de marcas de toque (fade out)
+  const now = performance.now();
+  for (let i = touchMarkers.length - 1; i >= 0; i--) {
+    const m = touchMarkers[i];
+    const age = now - m.t;
+    if (age > 600) {
+      touchMarkers.splice(i, 1);
+      continue;
+    }
+    const alpha = 1 - age / 600;
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(255,0,0,${alpha})`;
+    ctx.arc(m.x, m.y, 12 * alpha, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   requestAnimationFrame(loop);
 }
 
@@ -246,6 +271,11 @@ canvas.addEventListener(
     if (currentState && currentState.handleClick) {
       currentState.handleClick(x, y);
     }
+    // Depuración visual y log
+    try {
+      addTouchMarker(x, y);
+      console.log("TOUCH", { state: currentState?.constructor?.name, x, y });
+    } catch (e) {}
     // Intentar capturar el pointer para seguir recibiendo eventos aunque salga del canvas
     try {
       if (event.pointerId && event.target && event.target.setPointerCapture) {
