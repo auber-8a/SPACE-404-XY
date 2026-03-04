@@ -56,25 +56,24 @@ function resizeCanvas() {
 
   const scaleX = windowWidth / BASE_WIDTH;
   const scaleY = windowHeight / BASE_HEIGHT;
+  // Escala que hace que el canvas quepa dentro del viewport sin recortar
   canvasScale = Math.min(scaleX, scaleY);
 
   // Limitamos devicePixelRatio para no forzar demasiada resolución en móviles
   const DPR = window.devicePixelRatio || 1;
   const useDpr = Math.min(DPR, 1.5);
 
-  // Tamaño interno del canvas en píxeles (multiplicado por DPR limitado)
-  // Mantener las dimensiones lógicas del juego para que los estados sigan usando BASE_WIDTH/BASE_HEIGHT
-  canvas.width = BASE_WIDTH;
-  canvas.height = BASE_HEIGHT;
+  // Backing buffer del canvas en píxeles físicos (para evitar borrosidad)
+  canvas.width = Math.floor(BASE_WIDTH * useDpr);
+  canvas.height = Math.floor(BASE_HEIGHT * useDpr);
 
+  // Tamaño visual (CSS) calculado para ajustar al viewport sin recortar
+  const cssWidth = Math.floor(BASE_WIDTH * canvasScale);
+  const cssHeight = Math.floor(BASE_HEIGHT * canvasScale);
+  canvas.style.width = cssWidth + "px";
+  canvas.style.height = cssHeight + "px";
 
-  // Usar ancho responsivo (CSS controla el tamaño visual) para evitar recorte en móviles
-  // dejamos el tamaño lógico del canvas (BASE_WIDTH/BASE_HEIGHT) para las coordenadas
-  canvas.style.width = "100%";
-  canvas.style.height = "auto";
-
-  // Ajustamos el transform del contexto para renderizar a una resolución mayor en pantallas de alta DPI
-  // Escalar por useDpr mapea las coordenadas lógicas (BASE_WIDTH) a suficientes píxeles físicos.
+  // Ajustamos el transform del contexto para mapear coordenadas lógicas a la resolución física
   ctx.setTransform(useDpr, 0, 0, useDpr, 0, 0);
 }
 
