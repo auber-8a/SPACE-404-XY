@@ -4,26 +4,25 @@ body {
   padding: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;  /* No permitir scroll, el canvas llena el viewport */
+  overflow: hidden;
   background: #0f0f10;
   color: #eee;
   font-family: system-ui;
 }
 
 #gamecontainer {
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
 }
 
 #game {
   display: block;
   width: 100%;
-  height: 100%;
-  /* Mantener proporción 16:9 (960:540) dentro del viewport */
+  height: auto;
+  max-height: 100%;
   aspect-ratio: 960 / 540;
-  object-fit: contain;
-  image-rendering: pixelated;  /* Evita blur en móviles */
+  background: #0f0f10;
 }
