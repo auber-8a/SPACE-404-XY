@@ -51,8 +51,9 @@ let canvasScale = 1;
  * Ajusta el tamaño del canvas manteniendo la proporción 16:9
  */
 function resizeCanvas() {
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
+  // Preferir visualViewport cuando esté disponible (evita recortes por UI del navegador móvil)
+  const windowWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+  const windowHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
 
   const scaleX = windowWidth / BASE_WIDTH;
   const scaleY = windowHeight / BASE_HEIGHT;
@@ -68,8 +69,15 @@ function resizeCanvas() {
   canvas.height = Math.floor(BASE_HEIGHT * useDpr);
 
   // Tamaño visual (CSS) calculado para ajustar al viewport sin recortar
-  const cssWidth = Math.floor(BASE_WIDTH * canvasScale);
-  const cssHeight = Math.floor(BASE_HEIGHT * canvasScale);
+  let cssWidth = Math.floor(BASE_WIDTH * canvasScale);
+  let cssHeight = Math.floor(BASE_HEIGHT * canvasScale);
+
+  // Safety: si por redondeo el height excede el viewport, ajustamos
+  if (cssHeight > windowHeight) {
+    cssHeight = windowHeight;
+    cssWidth = Math.floor((BASE_WIDTH / BASE_HEIGHT) * cssHeight);
+  }
+
   canvas.style.width = cssWidth + "px";
   canvas.style.height = cssHeight + "px";
 
