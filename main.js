@@ -45,42 +45,25 @@ function addTouchMarker(x, y) {
 
 const BASE_WIDTH = 960;
 const BASE_HEIGHT = 540;
-let canvasScale = 1;
 
 /**
- * Ajusta el tamaño del canvas: backing buffer por DPR, contexto transformado.
- * El CSS (viewport 100vw/100vh con aspect-ratio) controla el tamaño visual.
+ * Ajusta el tamaño del canvas: mantiene dimensiones lógicas (960x540) para que
+ * los estados puedan calcular correctamente botones y elementos.
+ * CSS maneja el escalado visual (viewport 100vw/100vh).
  */
 function resizeCanvas() {
-  // Limitamos devicePixelRatio para no forzar demasiada resolución en móviles
-  const DPR = window.devicePixelRatio || 1;
-  const useDpr = Math.min(DPR, 1.5);
+  // Mantener dimensiones lógicas del juego (los estados las usan para botones, etc.)
+  canvas.width = BASE_WIDTH;
+  canvas.height = BASE_HEIGHT;
 
-  // Backing buffer del canvas en píxeles físicos (para evitar borrosidad)
-  // Mantenemos las dimensiones lógicas (BASE_WIDTH, BASE_HEIGHT)
-  // pero aumentamos la resolución interna por el DPR
-  canvas.width = Math.floor(BASE_WIDTH * useDpr);
-  canvas.height = Math.floor(BASE_HEIGHT * useDpr);
-
-  // Ajustamos el transform del contexto para que las coordenadas lógicas (960x540)
-  // se mapeen correctamente al backing buffer (960*DPR x 540*DPR)
-  ctx.setTransform(useDpr, 0, 0, useDpr, 0, 0);
+  // No escalar el contexto: el CSS maneja el tamaño visual
+  // ctx.setTransform es identidad por defecto, así que no lo tocamos
+  ctx.imageSmoothingEnabled = false;  // Pixelart nítido en móviles
 }
 
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
-
-// En móviles, visualViewport es más preciso que window.resize
-// Lo escuchamos si está disponible para ajustar al instante (sin esperar a window.resize)
-if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", resizeCanvas);
-  window.visualViewport.addEventListener("scroll", resizeCanvas);  // cambios por zoom del navegador
-}
-
-// Cambio de orientación: también llamar a resizeCanvas
-window.addEventListener("orientationchange", () => {
-  setTimeout(resizeCanvas, 100);  // pequeño delay para que se estabilice la orientación
-});
+window.addEventListener("orientationchange", resizeCanvas);
 
 /**
  * Configuración global del juego
