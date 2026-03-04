@@ -25,8 +25,14 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 let last = 0;
 
+// Mejoras para touch y rendimiento en móviles
+canvas.style.touchAction = 'none';
+canvas.style.webkitTapHighlightColor = 'transparent';
+canvas.style.userSelect = 'none';
 const performanceMonitor = new PerformanceMonitor();
 window.performanceMonitor = performanceMonitor;
+// Ocultar el monitor de FPS por defecto (se puede activar con F3)
+performanceMonitor.isEnabled = false;
 
 const BASE_WIDTH = 960;
 const BASE_HEIGHT = 540;
@@ -43,11 +49,20 @@ function resizeCanvas() {
   const scaleY = windowHeight / BASE_HEIGHT;
   canvasScale = Math.min(scaleX, scaleY);
 
-  canvas.width = BASE_WIDTH;
-  canvas.height = BASE_HEIGHT;
+  // Limitamos devicePixelRatio para no forzar demasiada resolución en móviles
+  const DPR = window.devicePixelRatio || 1;
+  const useDpr = Math.min(DPR, 1.5);
 
-  canvas.style.width = BASE_WIDTH * canvasScale + "px";
-  canvas.style.height = BASE_HEIGHT * canvasScale + "px";
+  // Tamaño interno del canvas en píxeles (multiplicado por DPR limitado)
+  canvas.width = Math.floor(BASE_WIDTH * useDpr);
+  canvas.height = Math.floor(BASE_HEIGHT * useDpr);
+
+  // Tamaño visual en CSS para mantener la escala calculada
+  canvas.style.width = Math.floor(BASE_WIDTH * canvasScale) + "px";
+  canvas.style.height = Math.floor(BASE_HEIGHT * canvasScale) + "px";
+
+  // Ajustamos el transform del contexto para que las coordenadas del juego sigan siendo BASE_WIDTH x BASE_HEIGHT
+  ctx.setTransform(useDpr, 0, 0, useDpr, 0, 0);
 }
 
 resizeCanvas();
@@ -206,7 +221,8 @@ function loop(ts) {
   performanceMonitor.update(ts);
   stateManager.update(dt);
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Limpiamos usando las coordenadas lógicas del juego (BASE_WIDTH x BASE_HEIGHT)
+  ctx.clearRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
 
   stateManager.render(ctx);
   performanceMonitor.render(ctx);
@@ -214,42 +230,51 @@ function loop(ts) {
   requestAnimationFrame(loop);
 }
 
-canvas.addEventListener("mousedown", (event) => {
-  const rect = canvas.getBoundingClientRect();
+// Pointer events (reemplazan mouse+touch en la mayoría de dispositivos)
+canvas.addEventListener(
+  "pointerdown",
+  (event) => {
+    event.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = BASE_WIDTH / rect.width;
+    const scaleY = BASE_HEIGHT / rect.height;
+    const x = (event.clientX - rect.left) * scaleX;
+    const y = (event.clientY - rect.top) * scaleY;
+    const currentState = stateManager.getCurrentState();
+    if (currentState && currentState.handleClick) {
+      currentState.handleClick(x, y);
+    }
+  },
+  { passive: false }
+);
 
-  const scaleX = BASE_WIDTH / rect.width;
-  const scaleY = BASE_HEIGHT / rect.height;
+canvas.addEventListener(
+  "pointermove",
+  (event) => {
+    // Si no hay movimiento principal, ignorar
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = BASE_WIDTH / rect.width;
+    const scaleY = BASE_HEIGHT / rect.height;
+    const x = (event.clientX - rect.left) * scaleX;
+    const y = (event.clientY - rect.top) * scaleY;
+    const currentState = stateManager.getCurrentState();
+    if (currentState && currentState.handleMouseMove) {
+      currentState.handleMouseMove(x, y);
+    }
+  },
+  { passive: false }
+);
 
-  const x = (event.clientX - rect.left) * scaleX;
-  const y = (event.clientY - rect.top) * scaleY;
-
-  const currentState = stateManager.getCurrentState();
-  if (currentState && currentState.handleClick) {
-    currentState.handleClick(x, y);
-  }
-});
-
-canvas.addEventListener("mousemove", (event) => {
-  const rect = canvas.getBoundingClientRect();
-
-  const scaleX = BASE_WIDTH / rect.width;
-  const scaleY = BASE_HEIGHT / rect.height;
-
-  const x = (event.clientX - rect.left) * scaleX;
-  const y = (event.clientY - rect.top) * scaleY;
-
-  const currentState = stateManager.getCurrentState();
-  if (currentState && currentState.handleMouseMove) {
-    currentState.handleMouseMove(x, y);
-  }
-});
-
-canvas.addEventListener("mouseup", () => {
-  const currentState = stateManager.getCurrentState();
-  if (currentState && currentState.handleMouseUp) {
-    currentState.handleMouseUp();
-  }
-});
+canvas.addEventListener(
+  "pointerup",
+  (event) => {
+    const currentState = stateManager.getCurrentState();
+    if (currentState && currentState.handleMouseUp) {
+      currentState.handleMouseUp();
+    }
+  },
+  { passive: false }
+);
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "F3") {
@@ -293,7 +318,7 @@ canvas.addEventListener("touchstart", (event) => {
       currentState.handleTouchStart(x, y, touchId);
     }
   }
-});
+}, { passive: false });
 
 canvas.addEventListener("touchmove", (event) => {
   event.preventDefault();
@@ -312,7 +337,7 @@ canvas.addEventListener("touchmove", (event) => {
       currentState.handleTouchMove(x, y, touchId);
     }
   }
-});
+}, { passive: false });
 
 canvas.addEventListener("touchend", (event) => {
   event.preventDefault();
@@ -326,7 +351,7 @@ canvas.addEventListener("touchend", (event) => {
       currentState.handleTouchEnd(touchId);
     }
   }
-});
+}, { passive: false });
 
 canvas.addEventListener("touchcancel", (event) => {
   event.preventDefault();
@@ -340,7 +365,7 @@ canvas.addEventListener("touchcancel", (event) => {
       currentState.handleTouchEnd(touchId);
     }
   }
-});
+}, { passive: false });
 
 loadAssets();
 requestAnimationFrame(loop);
