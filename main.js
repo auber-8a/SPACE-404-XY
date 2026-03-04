@@ -54,14 +54,16 @@ function resizeCanvas() {
   const useDpr = Math.min(DPR, 1.5);
 
   // Tamaño interno del canvas en píxeles (multiplicado por DPR limitado)
-  canvas.width = Math.floor(BASE_WIDTH * useDpr);
-  canvas.height = Math.floor(BASE_HEIGHT * useDpr);
+  // Mantener las dimensiones lógicas del juego para que los estados sigan usando BASE_WIDTH/BASE_HEIGHT
+  canvas.width = BASE_WIDTH;
+  canvas.height = BASE_HEIGHT;
 
   // Tamaño visual en CSS para mantener la escala calculada
   canvas.style.width = Math.floor(BASE_WIDTH * canvasScale) + "px";
   canvas.style.height = Math.floor(BASE_HEIGHT * canvasScale) + "px";
 
-  // Ajustamos el transform del contexto para que las coordenadas del juego sigan siendo BASE_WIDTH x BASE_HEIGHT
+  // Ajustamos el transform del contexto para renderizar a una resolución mayor en pantallas de alta DPI
+  // Escalar por useDpr mapea las coordenadas lógicas (BASE_WIDTH) a suficientes píxeles físicos.
   ctx.setTransform(useDpr, 0, 0, useDpr, 0, 0);
 }
 
