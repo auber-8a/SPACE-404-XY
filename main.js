@@ -48,40 +48,22 @@ const BASE_HEIGHT = 540;
 let canvasScale = 1;
 
 /**
- * Ajusta el tamaño del canvas manteniendo la proporción 16:9
+ * Ajusta el tamaño del canvas: backing buffer por DPR, contexto transformado.
+ * El CSS (viewport 100vw/100vh con aspect-ratio) controla el tamaño visual.
  */
 function resizeCanvas() {
-  // Preferir visualViewport cuando esté disponible (evita recortes por UI del navegador móvil)
-  const windowWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-  const windowHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-
-  const scaleX = windowWidth / BASE_WIDTH;
-  const scaleY = windowHeight / BASE_HEIGHT;
-  // Escala que hace que el canvas quepa dentro del viewport sin recortar
-  canvasScale = Math.min(scaleX, scaleY);
-
   // Limitamos devicePixelRatio para no forzar demasiada resolución en móviles
   const DPR = window.devicePixelRatio || 1;
   const useDpr = Math.min(DPR, 1.5);
 
   // Backing buffer del canvas en píxeles físicos (para evitar borrosidad)
+  // Mantenemos las dimensiones lógicas (BASE_WIDTH, BASE_HEIGHT)
+  // pero aumentamos la resolución interna por el DPR
   canvas.width = Math.floor(BASE_WIDTH * useDpr);
   canvas.height = Math.floor(BASE_HEIGHT * useDpr);
 
-  // Tamaño visual (CSS) calculado para ajustar al viewport sin recortar
-  let cssWidth = Math.floor(BASE_WIDTH * canvasScale);
-  let cssHeight = Math.floor(BASE_HEIGHT * canvasScale);
-
-  // Safety: si por redondeo el height excede el viewport, ajustamos
-  if (cssHeight > windowHeight) {
-    cssHeight = windowHeight;
-    cssWidth = Math.floor((BASE_WIDTH / BASE_HEIGHT) * cssHeight);
-  }
-
-  canvas.style.width = cssWidth + "px";
-  canvas.style.height = cssHeight + "px";
-
-  // Ajustamos el transform del contexto para mapear coordenadas lógicas a la resolución física
+  // Ajustamos el transform del contexto para que las coordenadas lógicas (960x540)
+  // se mapeen correctamente al backing buffer (960*DPR x 540*DPR)
   ctx.setTransform(useDpr, 0, 0, useDpr, 0, 0);
 }
 
