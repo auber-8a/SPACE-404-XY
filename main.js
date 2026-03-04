@@ -244,6 +244,14 @@ canvas.addEventListener(
     if (currentState && currentState.handleClick) {
       currentState.handleClick(x, y);
     }
+    // Intentar capturar el pointer para seguir recibiendo eventos aunque salga del canvas
+    try {
+      if (event.pointerId && event.target && event.target.setPointerCapture) {
+        event.target.setPointerCapture(event.pointerId);
+      }
+    } catch (e) {
+      // algunos navegadores pueden lanzar si no es soportado
+    }
   },
   { passive: false }
 );
@@ -272,6 +280,28 @@ canvas.addEventListener(
     if (currentState && currentState.handleMouseUp) {
       currentState.handleMouseUp();
     }
+    try {
+      if (event.pointerId && event.target && event.target.releasePointerCapture) {
+        event.target.releasePointerCapture(event.pointerId);
+      }
+    } catch (e) {}
+  },
+  { passive: false }
+);
+
+// pointercancel: tratar como pointerup y liberar captura
+canvas.addEventListener(
+  "pointercancel",
+  (event) => {
+    const currentState = stateManager.getCurrentState();
+    if (currentState && currentState.handleMouseUp) {
+      currentState.handleMouseUp();
+    }
+    try {
+      if (event.pointerId && event.target && event.target.releasePointerCapture) {
+        event.target.releasePointerCapture(event.pointerId);
+      }
+    } catch (e) {}
   },
   { passive: false }
 );
@@ -301,71 +331,74 @@ document.addEventListener("keyup", (event) => {
   }
 });
 
-canvas.addEventListener("touchstart", (event) => {
-  event.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = BASE_WIDTH / rect.width;
-  const scaleY = BASE_HEIGHT / rect.height;
+// Sólo registrar touch handlers si el navegador NO soporta Pointer Events
+if (!window.PointerEvent) {
+  canvas.addEventListener("touchstart", (event) => {
+    event.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = BASE_WIDTH / rect.width;
+    const scaleY = BASE_HEIGHT / rect.height;
 
-  for (let i = 0; i < event.changedTouches.length; i++) {
-    const touch = event.changedTouches[i];
-    const x = (touch.clientX - rect.left) * scaleX;
-    const y = (touch.clientY - rect.top) * scaleY;
-    const touchId = touch.identifier;
+    for (let i = 0; i < event.changedTouches.length; i++) {
+      const touch = event.changedTouches[i];
+      const x = (touch.clientX - rect.left) * scaleX;
+      const y = (touch.clientY - rect.top) * scaleY;
+      const touchId = touch.identifier;
 
-    const currentState = stateManager.getCurrentState();
-    if (currentState && currentState.handleTouchStart) {
-      currentState.handleTouchStart(x, y, touchId);
+      const currentState = stateManager.getCurrentState();
+      if (currentState && currentState.handleTouchStart) {
+        currentState.handleTouchStart(x, y, touchId);
+      }
     }
-  }
-}, { passive: false });
+  }, { passive: false });
 
-canvas.addEventListener("touchmove", (event) => {
-  event.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = BASE_WIDTH / rect.width;
-  const scaleY = BASE_HEIGHT / rect.height;
+  canvas.addEventListener("touchmove", (event) => {
+    event.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = BASE_WIDTH / rect.width;
+    const scaleY = BASE_HEIGHT / rect.height;
 
-  for (let i = 0; i < event.changedTouches.length; i++) {
-    const touch = event.changedTouches[i];
-    const x = (touch.clientX - rect.left) * scaleX;
-    const y = (touch.clientY - rect.top) * scaleY;
-    const touchId = touch.identifier;
+    for (let i = 0; i < event.changedTouches.length; i++) {
+      const touch = event.changedTouches[i];
+      const x = (touch.clientX - rect.left) * scaleX;
+      const y = (touch.clientY - rect.top) * scaleY;
+      const touchId = touch.identifier;
 
-    const currentState = stateManager.getCurrentState();
-    if (currentState && currentState.handleTouchMove) {
-      currentState.handleTouchMove(x, y, touchId);
+      const currentState = stateManager.getCurrentState();
+      if (currentState && currentState.handleTouchMove) {
+        currentState.handleTouchMove(x, y, touchId);
+      }
     }
-  }
-}, { passive: false });
+  }, { passive: false });
 
-canvas.addEventListener("touchend", (event) => {
-  event.preventDefault();
+  canvas.addEventListener("touchend", (event) => {
+    event.preventDefault();
 
-  for (let i = 0; i < event.changedTouches.length; i++) {
-    const touch = event.changedTouches[i];
-    const touchId = touch.identifier;
+    for (let i = 0; i < event.changedTouches.length; i++) {
+      const touch = event.changedTouches[i];
+      const touchId = touch.identifier;
 
-    const currentState = stateManager.getCurrentState();
-    if (currentState && currentState.handleTouchEnd) {
-      currentState.handleTouchEnd(touchId);
+      const currentState = stateManager.getCurrentState();
+      if (currentState && currentState.handleTouchEnd) {
+        currentState.handleTouchEnd(touchId);
+      }
     }
-  }
-}, { passive: false });
+  }, { passive: false });
 
-canvas.addEventListener("touchcancel", (event) => {
-  event.preventDefault();
+  canvas.addEventListener("touchcancel", (event) => {
+    event.preventDefault();
 
-  for (let i = 0; i < event.changedTouches.length; i++) {
-    const touch = event.changedTouches[i];
-    const touchId = touch.identifier;
+    for (let i = 0; i < event.changedTouches.length; i++) {
+      const touch = event.changedTouches[i];
+      const touchId = touch.identifier;
 
-    const currentState = stateManager.getCurrentState();
-    if (currentState && currentState.handleTouchEnd) {
-      currentState.handleTouchEnd(touchId);
+      const currentState = stateManager.getCurrentState();
+      if (currentState && currentState.handleTouchEnd) {
+        currentState.handleTouchEnd(touchId);
+      }
     }
-  }
-}, { passive: false });
+  }, { passive: false });
+}
 
 loadAssets();
 requestAnimationFrame(loop);
