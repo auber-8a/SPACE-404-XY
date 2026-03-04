@@ -88,6 +88,18 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
+// En móviles, visualViewport es más preciso que window.resize
+// Lo escuchamos si está disponible para ajustar al instante (sin esperar a window.resize)
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", resizeCanvas);
+  window.visualViewport.addEventListener("scroll", resizeCanvas);  // cambios por zoom del navegador
+}
+
+// Cambio de orientación: también llamar a resizeCanvas
+window.addEventListener("orientationchange", () => {
+  setTimeout(resizeCanvas, 100);  // pequeño delay para que se estabilice la orientación
+});
+
 /**
  * Configuración global del juego
  * @property {boolean} soundEffectsEnabled - Efectos de sonido activados
